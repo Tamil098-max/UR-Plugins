@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>URCapX Generator</title>
+  <style>
+    body { font-family: Arial; padding: 30px; background: #1e1e1e; color: white; }
+    input, select, textarea { width: 100%; padding: 8px; margin: 6px 0; }
+    button { padding: 10px 20px; background: #007acc; color: white; border: none; cursor: pointer; }
+    .section { border: 1px solid #444; padding: 15px; margin-bottom: 20px; }
+    h2 { color: #4fc3f7; }
+  </style>
+</head>
+<body>
+
+<h1>URCapX Generator</h1>
+
+<div class="section">
+  <h2>Project Info</h2>
+  <input id="vendorId" placeholder="Vendor ID (lowercase, letters/numbers/_/-)">
+  <input id="vendorName" placeholder="Vendor Name">
+  <input id="urcapId" placeholder="URCap ID (lowercase, letters/numbers/_/-)">
+  <input id="urcapName" placeholder="URCap Name">
+</div>
+
+<div class="section">
+  <h2>Features</h2>
+  <label><input type="checkbox" id="includeFrontend" checked> Include Frontend</label><br>
+  <label><input type="checkbox" id="includeDocker" checked> Include Docker</label><br>
+  <label><input type="checkbox" id="includeRos"> Include ROS2</label><br>
+
+  <select id="frontendType">
+    <option value="angular">Angular</option>
+    <option value="javascript">JavaScript</option>
+  </select>
+</div>
+
+<div class="section">
+  <h2>Nodes (comma separated)</h2>
+  <textarea id="applicationNodes" placeholder="Application Nodes (e.g. config-node)"></textarea>
+  <textarea id="programNodes" placeholder="Program Nodes (e.g. gripper-control)"></textarea>
+  <textarea id="smartSkills" placeholder="Smart Skills"></textarea>
+  <textarea id="sidebarItems" placeholder="Sidebar Items"></textarea>
+  <textarea id="operatorScreens" placeholder="Operator Screens"></textarea>
+</div>
+
+<button onclick="generate()">Generate URCap</button>
+
+<script>
+function splitInput(value) {
+  if (!value.trim()) return [];
+  return value.split(",").map(v => v.trim()).filter(v => v.length > 0);
+}
+
+async function generate() {
+
+  const data = {
+    vendorId: document.getElementById("vendorId").value,
+    vendorName: document.getElementById("vendorName").value,
+    urcapId: document.getElementById("urcapId").value,
+    urcapName: document.getElementById("urcapName").value,
+    includeFrontend: document.getElementById("includeFrontend").checked,
+    includeDocker: document.getElementById("includeDocker").checked,
+    includeRos: document.getElementById("includeRos").checked,
+    frontendType: document.getElementById("frontendType").value,
+    applicationNodes: splitInput(document.getElementById("applicationNodes").value),
+    programNodes: splitInput(document.getElementById("programNodes").value),
+    smartSkills: splitInput(document.getElementById("smartSkills").value),
+    sidebarItems: splitInput(document.getElementById("sidebarItems").value),
+    operatorScreens: splitInput(document.getElementById("operatorScreens").value)
+  };
+
+  const response = await fetch("http://localhost:3000/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  if (!response.ok) {
+    alert("Generation failed");
+    return;
+  }
+
+  const blob = await response.blob();
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(blob);
+  link.download = "urcap-project.zip";
+  link.click();
+}
+</script>
+
+</body>
+</html>
